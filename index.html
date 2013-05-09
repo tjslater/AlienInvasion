@@ -1,0 +1,35 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+	<meta charset="UTF-8"/>
+<title>Alien Invasion</title>
+ <link rel="stylesheet" href="assets/bootstrap.css" type="text/css" />
+ <link rel="stylesheet" href="base.css" type="text/css" />
+ <link href='http://fonts.googleapis.com/css?family=Bangers' rel='stylesheet' type='text/css'>
+</head>
+<body>
+<div class="background">
+	<div id='container'>
+		<div class='background'></div>
+		<canvas id='game' width='320' height='480'></canvas>
+	<div>
+</div>
+	<script src='engine.js'></script>
+	<script src='game.js'></script>
+	
+
+ <!--   <audio preload="auto" src="assets/18-machinae_supremacy-lord_krutors_dominion.mp3"></audio>
+    <audio autoplay>
+  	<source src="assets/18-machinae_supremacy-lord_krutors_dominion.mp3" type="audio/mpeg"> -->
+  	<audio autoplay preload="auto" id="player" src="assets/05-Binrpilot-Underground.mp3" type="audio/mpeg"></audio>
+	<div class="well" style="text-align: center;">
+		<p class="lead">Music</p>
+	<button type="button" class="btn btn-success" onclick="document.getElementById('player').play()">Play</button>
+	<button type="button" class="btn btn-danger"onclick="document.getElementById('player').pause()">Pause</button>
+	<button type="button" class="btn" onclick="document.getElementById('player').volume+=0.1">Louder</button>
+	<button type="button" class="btn" onclick="document.getElementById('player').volume-=0.1">Softer</button>
+	
+</div>
+</audio> 
+</body>
+</html>
