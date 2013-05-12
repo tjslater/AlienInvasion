@@ -1,28 +1,31 @@
 var boom = new Audio("assets/Game-Death.ogg");
 var shot = new Audio("assets/Game-Shot.ogg");
 var startsound = new Audio("assets/Game-Spawn.ogg");
+var lose = new Audio("assets/Game-Death.ogg");
 
 var sprites = {
- ship: { sx: 0, sy: 0, w: 37, h: 42, frames: 1 },
- missile: { sx: 0, sy: 30, w: 2, h: 10, frames: 1 },
- enemy_purple: { sx: 37, sy: 0, w: 42, h: 43, frames: 1 },
- enemy_bee: { sx: 79, sy: 0, w: 37, h: 43, frames: 1 },
- enemy_ship: { sx: 116, sy: 0, w: 42, h: 43, frames: 1 },
- enemy_circle: { sx: 158, sy: 0, w: 32, h: 33, frames: 1 },
- explosion: { sx: 0, sy: 64, w: 64, h: 64, frames: 12 }
+ship: { sx: 0, sy: 0, w: 37, h: 42, frames: 1 },
+missile: { sx: 0, sy: 30, w: 2, h: 10, frames: 1 },
+enemy_purple: { sx: 37, sy: 0, w: 42, h: 43, frames: 1 },
+enemy_bee: { sx: 79, sy: 0, w: 37, h: 43, frames: 1 },
+enemy_ship: { sx: 116, sy: 0, w: 42, h: 43, frames: 1 },
+enemy_circle: { sx: 158, sy: 0, w: 32, h: 33, frames: 1 },
+explosion: { sx: 0, sy: 64, w: 64, h: 64, frames: 12 },
+enemy_missile: { sx: 9, sy: 42, w: 3, h: 20, frame: 1 }
 };
+
 
 
 var enemies = {
   
   straight: { x: 0,   y: -50, sprite: 'enemy_ship', health: 10, 
-              E: 100 },
+              E: 100, firePercentage: 0.001 },
   ltr:      { x: 0,   y: -100, sprite: 'enemy_purple', health: 10, 
-              B: 75, C: 1, E: 100  },
+              B: 75, C: 1, E: 100, missiles: 2  },
   circle:   { x: 250,   y: -50, sprite: 'enemy_circle', health: 10, 
               A: 0,  B: -100, C: 1, E: 20, F: 100, G: 1, H: Math.PI/2 },
   wiggle:   { x: 100, y: -50, sprite: 'enemy_bee', health: 20, 
-              B: 50, C: 4, E: 100 },
+              B: 50, C: 4, E: 100, firePercentage: 0.001, missiles: 2 },
   step:     { x: 0,   y: -50, sprite: 'enemy_circle', health: 10,
               B: 150, C: 1.2, E: 75 }
 
@@ -57,11 +60,13 @@ var level1 = [
 ];
 
 var playGame = function() {
+  
   startsound.play();
   var board = new GameBoard();
   board.add(new PlayerShip());
   board.add(new Level(level1, winGame));
   Game.setBoard(3, board);
+  Game.setBoard(5, new GamePoints(0));
 };
 
 var winGame = function(){
@@ -69,6 +74,7 @@ var winGame = function(){
 }
 
 var loseGame = function(){
+	lose.play();
 	Game.setBoard(3, new TitleScreen("You lose!", "Press fire to try again", "", playGame));
 }
 
@@ -143,7 +149,7 @@ var PlayerShip = function() {
 
   this.reload = this.reloadTime;
   this.x = Game.width/2 - this.w / 2;
-  this.y = Game.height - 10 - this.h;
+  this.y = Game.height - Game.playerOffset - this.h;
 
   this.step = function(dt) {
     if(Game.keys['left']) { this.vx = -this.maxVel; }
@@ -214,12 +220,48 @@ Enemy.prototype.type = OBJECT_ENEMY;
 
 Enemy.prototype.baseParameters = { A: 0, B: 0, C: 0, D: 0, 
                                    E: 0, F: 0, G: 0, H: 0,
-                                   t: 0 };
+                                   t: 0, firePercentage: 0.01, reloadTime: 0.75, reload: 0 };
 
 Enemy.prototype.step = function(dt) {
   this.t += dt;
 
-  this.vx = this.A + this.B * Math.sin(this.C * this.t + this.D);
+  this.vx = this.A + this.B * Math.sEnemy.prototype.step = function(dt) {
+this.t += dt;
+this.vx = this.A +
+this.B * Math.sin(this.C * this.t + this.D);
+this.vy = this.E +
+this.F * Math.sin(this.G * this.t + this.H);
+this.x += this.vx * dt;
+this.y += this.vy * dt;
+var collision = this.board.collide(this,OBJECT_PLAYER);
+  if(collision) {
+    collision.hit(this.damage);
+    this.board.remove(this);
+  }
+  if(this.reload <= 0 &&
+    Math.random() < this.firePercentage) {
+    this.reload = this.reloadTime;
+  if(this.missiles == 2) {
+    this.board.add(
+    new EnemyMissile(this.x+this.w-2,this.y+this.h/2)
+    );
+    this.board.add(
+      new EnemyMissile(this.x+2,this.y+this.h/2)
+    );
+    } else {
+      this.board.add(
+      new EnemyMissile(this.x+this.w/2,this.y+this.h)
+      );
+    }
+  }
+this.reload-=dt;
+if(this.y > Game.height ||
+  this.x < -this.w ||
+  this.x > Game.width) {
+  this.board.remove(this);
+  }
+};
+if(this.C * this.t + this.D);
   this.vy = this.E + this.F * Math.sin(this.G * this.t + this.H);
 
   this.x += this.vx * dt;
@@ -239,15 +281,19 @@ Enemy.prototype.step = function(dt) {
 }
 
 Enemy.prototype.hit = function(damage) {
-  this.health -= damage;
-  if(this.health <= 0) {
-  	var boom = new Audio("assets/Game-Death.ogg");
-	boom.play();
-    this.board.add(new Explosion(this.x + this.w/2, 
-                                 this.y + this.h/2));
-    this.board.remove(this);
-  }
+  var boom = new Audio("assets/Game-Death.ogg");
+    boom.play();
+
+this.health -= damage;
+if(this.health <=0) {
+if(this.board.remove(this)) {
+Game.points += this.points || 100;
+this.board.add(new Explosion(this.x + this.w/2,
+this.y + this.h/2));
 }
+}
+};
+
 
 var Explosion = function(centerX, centerY){
 	this.setup('explosion', { frame: 0});
@@ -264,3 +310,62 @@ Explosion.prototype.step = function(dt) {
 		this.board.remove(this);
 	}
 };
+
+var EnemyMissile = function(x,y) {
+this.setup('enemy_missile',{ vy: 200, damage: 10 });
+this.x = x - this.w/2;
+this.y = y;
+};
+
+EnemyMissile.prototype = new Sprite();
+EnemyMissile.prototype.type = OBJECT_ENEMY_PROJECTILE;
+
+EnemyMissile.prototype.step = function(dt) {
+this.y += this.vy * dt;
+var collision = this.board.collide(this,OBJECT_PLAYER)
+if(collision) {
+collision.hit(this.damage);
+this.board.remove(this);
+} else if(this.y > Game.height) {
+this.board.remove(this);
+}
+};
+
+
+Enemy.prototype.step = function(dt) {
+this.t += dt;
+this.vx = this.A +
+this.B * Math.sin(this.C * this.t + this.D);
+this.vy = this.E +
+this.F * Math.sin(this.G * this.t + this.H);
+this.x += this.vx * dt;
+this.y += this.vy * dt;
+var collision = this.board.collide(this,OBJECT_PLAYER);
+  if(collision) {
+    collision.hit(this.damage);
+    this.board.remove(this);
+    }
+  if(this.reload <= 0 &&
+    Math.random() < this.firePercentage) {
+    this.reload = this.reloadTime;
+  if(this.missiles == 2) {
+    this.board.add(
+    new EnemyMissile(this.x+this.w-2,this.y+this.h/2)
+    );
+this.board.add(
+    new EnemyMissile(this.x+2,this.y+this.h/2)
+    );
+    } else {
+this.board.add(
+    new EnemyMissile(this.x+this.w/2,this.y+this.h)
+    );
+  }
+}
+this.reload-=dt;
+if(this.y > Game.height ||
+  this.x < -this.w ||
+  this.x > Game.width) {
+  this.board.remove(this);
+  }
+};
+
